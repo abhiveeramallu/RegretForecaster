@@ -33,6 +33,47 @@ interface AnalyzeClientProps {
   recordId: string | null;
 }
 
+const readDraftFromCookie = () => {
+  const cookie = document.cookie
+    .split("; ")
+    .find((item) => item.startsWith("rf_decision_draft="));
+  if (!cookie) return "";
+
+  try {
+    const value = decodeURIComponent(cookie.slice("rf_decision_draft=".length)).trim();
+    document.cookie = "rf_decision_draft=; Path=/; Max-Age=0; SameSite=Lax";
+    return value;
+  } catch {
+    return "";
+  }
+};
+
+const readDecisionDraft = () => {
+  let draft = "";
+
+  try {
+    draft = sessionStorage.getItem("rf:decision:draft")?.trim() ?? "";
+  } catch {
+    draft = "";
+  }
+
+  if (draft) return draft;
+
+  if (typeof document !== "undefined") {
+    const cookieDraft = readDraftFromCookie();
+    if (cookieDraft) {
+      try {
+        sessionStorage.setItem("rf:decision:draft", cookieDraft);
+      } catch {
+        // ignore
+      }
+      return cookieDraft;
+    }
+  }
+
+  return "";
+};
+
 const WaveThinking = () => (
   <div className="flex items-end gap-1 rounded-full border border-border bg-surface px-4 py-2 text-xs text-text-muted">
     <span>Thinking...</span>
@@ -116,7 +157,7 @@ export default function AnalyzeClient({ recordId }: AnalyzeClientProps) {
         return;
       }
 
-      const draft = sessionStorage.getItem("rf:decision:draft")?.trim() ?? "";
+      const draft = readDecisionDraft();
       if (draft.length < 40) {
         setError("No valid decision draft found. Go back and describe your decision first.");
         setLoading(false);

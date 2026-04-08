@@ -22,11 +22,26 @@ export default function DecisionInput() {
 
   const charsLeft = useMemo(() => Math.max(0, MIN_CHARS - charCount), [charCount]);
 
+  const persistDraft = (value: string) => {
+    try {
+      sessionStorage.setItem("rf:decision:draft", value);
+      return;
+    } catch {
+      // Safari private mode can block storage writes. Fall back to a short-lived cookie.
+    }
+
+    try {
+      document.cookie = `rf_decision_draft=${encodeURIComponent(value)}; Path=/; Max-Age=1800; SameSite=Lax`;
+    } catch {
+      // Ignore fallback failure and continue navigation.
+    }
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canForecast) return;
 
-    sessionStorage.setItem("rf:decision:draft", decisionText.trim());
+    persistDraft(decisionText.trim());
     router.push("/analyze");
   };
 

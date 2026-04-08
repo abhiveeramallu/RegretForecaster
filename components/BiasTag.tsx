@@ -18,14 +18,20 @@ const stylesBySeverity: Record<BiasSeverity, string> = {
 };
 
 export default function BiasTag({ label, severity, explanation }: BiasTagProps) {
-  const [hovered, setHovered] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative inline-flex" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <span className={`rounded-full border px-3 py-1.5 text-sm ${stylesBySeverity[severity]}`}>{label}</span>
+    <div className="relative inline-flex" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        type="button"
+        className={`rounded-full border px-3 py-1.5 text-sm ${stylesBySeverity[severity]}`}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {label}
+      </button>
 
       <AnimatePresence>
-        {hovered && (
+        {open && (
           <motion.div
             className="absolute left-0 top-[calc(100%+10px)] z-20 w-64 rounded-xl border border-border bg-card p-3 text-xs leading-relaxed text-text-muted shadow-ringSoft"
             initial={{ opacity: 0, y: -4 }}
