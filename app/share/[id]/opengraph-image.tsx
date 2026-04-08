@@ -1,5 +1,10 @@
 import { ImageResponse } from "next/og";
 
+import { decodeLocalSharePayload } from "@/lib/share-token";
+import { getSupabaseAdminClient } from "@/lib/supabase";
+
+export const runtime = "nodejs";
+
 export const size = {
   width: 1200,
   height: 630
@@ -19,31 +24,51 @@ const scoreColor = (score: number) => {
   return "#E5534B";
 };
 
-export default async function OGImage({ params }: OGProps) {
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+const decodeToken = (rawId: string) => {
+  try {
+    return decodeURIComponent(rawId);
+  } catch {
+    return rawId;
+  }
+};
 
-  let score = 0;
-  let verdict = "Regret Forecast";
+const loadOgData = async (rawId: string) => {
+  const token = decodeToken(rawId);
+
+  const localPayload = decodeLocalSharePayload(token);
+  if (localPayload) {
+    return {
+      score: localPayload.result.score,
+      verdict: localPayload.result.verdict
+    };
+  }
 
   try {
-    const token = encodeURIComponent(params.id);
-    const response = await fetch(`${appUrl}/api/share/${token}`, { cache: "no-store" });
-    if (response.ok) {
-      const payload = (await response.json()) as {
-        analysis?: { score?: number; verdict?: string };
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("analyses")
+      .select("score, verdict")
+      .eq("share_token", token)
+      .single();
+
+    if (!error && data && typeof data.score === "number" && typeof data.verdict === "string") {
+      return {
+        score: data.score,
+        verdict: data.verdict
       };
-
-      if (typeof payload.analysis?.score === "number") {
-        score = payload.analysis.score;
-      }
-
-      if (typeof payload.analysis?.verdict === "string") {
-        verdict = payload.analysis.verdict;
-      }
     }
   } catch {
-    // fallback defaults
+    // Fall through to defaults.
   }
+
+  return {
+    score: 0,
+    verdict: "Regret Forecast"
+  };
+};
+
+export default async function OGImage({ params }: OGProps) {
+  const { score, verdict } = await loadOgData(params.id);
 
   return new ImageResponse(
     (
