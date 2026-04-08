@@ -173,10 +173,14 @@ export async function POST(request: NextRequest) {
 
         if (saveError || !savedRow) {
           send({
-            type: "error",
-            code: "db_error",
-            message: "Analysis generated, but saving failed. Please retry once.",
-            details: saveError?.message ?? "Unknown Supabase insert error"
+            type: "complete",
+            data: finalAnalysis,
+            id: null,
+            shareToken: "",
+            createdAt: new Date().toISOString(),
+            persisted: false,
+            warning:
+              "Analysis completed, but we could not save it to history because the database is unreachable."
           });
           close();
           return;

@@ -46,12 +46,12 @@ Copy `.env.example` to `.env.local` and fill values.
 cp .env.example .env.local
 ```
 
-Current default is local Ollama:
+Current default is a free hosted OpenAI-compatible endpoint (no API key required):
 
 ```env
-AI_PROVIDER=ollama
-AI_MODEL=llama3.2:latest
-OLLAMA_BASE_URL=http://127.0.0.1:11434
+AI_PROVIDER=openai-compatible
+AI_MODEL=openai-fast
+AI_BASE_URL=https://text.pollinations.ai/openai
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -70,11 +70,16 @@ Optional provider-specific variables:
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=claude-sonnet-4-20250514
 
-# OpenAI-compatible
+# OpenAI-compatible (for example OpenRouter, Groq-compatible, etc.)
 AI_PROVIDER=openai-compatible
 AI_BASE_URL=
 AI_API_KEY=
-AI_MODEL=meta-llama/llama-3.1-8b-instruct:free
+AI_MODEL=openai-fast
+
+# Local Ollama alternative
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.2:latest
 ```
 
 ## 3) Supabase Schema + RLS
@@ -129,7 +134,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## 9) Local No-Cost Setup (Recommended)
 
-If you do not want Anthropic billing:
+Fastest no-key option:
+
+```env
+AI_PROVIDER=openai-compatible
+AI_BASE_URL=https://text.pollinations.ai/openai
+AI_MODEL=openai-fast
+```
+
+Local private option (Ollama):
 
 1. Install and run Ollama.
 2. Pull a model, for example:

@@ -96,7 +96,7 @@ const resolveProvider = (): ResolvedProvider => {
   if (explicitProvider === "openai-compatible") {
     return {
       provider: "openai-compatible",
-      model: process.env.AI_MODEL || "meta-llama/llama-3.1-8b-instruct:free",
+      model: process.env.AI_MODEL || "openai-fast",
       baseUrl: process.env.AI_BASE_URL,
       apiKey: process.env.AI_API_KEY
     };
@@ -121,7 +121,7 @@ const resolveProvider = (): ResolvedProvider => {
   if (process.env.AI_API_KEY && process.env.AI_BASE_URL) {
     return {
       provider: "openai-compatible",
-      model: process.env.AI_MODEL || "meta-llama/llama-3.1-8b-instruct:free",
+      model: process.env.AI_MODEL || "openai-fast",
       baseUrl: process.env.AI_BASE_URL,
       apiKey: process.env.AI_API_KEY
     };
@@ -244,18 +244,22 @@ const streamFromOpenAiCompatible = async function* (
   decisionText: string,
   resolved: ResolvedProvider
 ): AsyncGenerator<string> {
-  if (!resolved.apiKey || !resolved.baseUrl) {
-    throw new Error("Missing AI_API_KEY or AI_BASE_URL for AI_PROVIDER=openai-compatible");
+  if (!resolved.baseUrl) {
+    throw new Error("Missing AI_BASE_URL for AI_PROVIDER=openai-compatible");
   }
 
   const endpoint = `${resolved.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const headers: Record<string, string> = {
+    "content-type": "application/json"
+  };
+
+  if (resolved.apiKey) {
+    headers.authorization = `Bearer ${resolved.apiKey}`;
+  }
 
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${resolved.apiKey}`
-    },
+    headers,
     body: JSON.stringify({
       model: resolved.model,
       temperature: 0.35,
