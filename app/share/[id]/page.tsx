@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import BiasTag from "@/components/BiasTag";
 import BreakdownMeters from "@/components/BreakdownMeters";
 import FutureVoice from "@/components/FutureVoice";
 import HiddenQuestion from "@/components/HiddenQuestion";
 import MitigationList from "@/components/MitigationList";
 import ScoreRing from "@/components/ScoreRing";
+import { decodeLocalSharePayload } from "@/lib/share-token";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import type { AnalysisResult } from "@/lib/types";
 import { normalizeAnalysis } from "@/lib/types";
@@ -18,6 +20,17 @@ interface PageProps {
 }
 
 const loadSharedAnalysis = async (token: string) => {
+  const localPayload = decodeLocalSharePayload(token);
+  if (localPayload) {
+    return {
+      decisionText: localPayload.decisionText,
+      score: localPayload.result.score,
+      verdict: localPayload.result.verdict,
+      createdAt: localPayload.createdAt,
+      result: localPayload.result
+    };
+  }
+
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from("analyses")
@@ -89,6 +102,20 @@ export default async function SharePage({ params }: PageProps) {
         <p className="mb-4 text-xs uppercase tracking-[0.2em] text-text-muted">Regret Risk Score</p>
         <div className="flex justify-center">
           <ScoreRing score={shared.result.score} verdict={shared.result.verdict} />
+        </div>
+      </section>
+
+      <section className="mb-5 rounded-2xl border border-border bg-card p-6">
+        <p className="mb-4 text-xs uppercase tracking-[0.2em] text-text-muted">Cognitive Bias Detector</p>
+        <div className="flex flex-wrap gap-2">
+          {shared.result.biases.map((bias, index) => (
+            <BiasTag
+              key={`${bias}-${index}`}
+              label={bias}
+              severity={shared.result.biases_severity[index] ?? "medium"}
+              explanation={shared.result.biases_explanation[index] ?? "Explanation unavailable."}
+            />
+          ))}
         </div>
       </section>
 

@@ -9,6 +9,7 @@ import {
 } from "@/lib/claude";
 import { parseTopLevelJsonProgress } from "@/lib/streaming-json";
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import { encodeLocalSharePayload } from "@/lib/share-token";
 import { normalizeAnalysis } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -172,15 +173,22 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (saveError || !savedRow) {
+          const createdAt = new Date().toISOString();
+          const localShareToken = encodeLocalSharePayload({
+            decisionText,
+            result: finalAnalysis,
+            createdAt
+          });
+
           send({
             type: "complete",
             data: finalAnalysis,
             id: null,
-            shareToken: "",
-            createdAt: new Date().toISOString(),
+            shareToken: localShareToken,
+            createdAt,
             persisted: false,
             warning:
-              "Analysis completed, but we could not save it to history because the database is unreachable."
+              "Analysis completed, but we could not save it to history because the database is unreachable. A portable share link was generated instead."
           });
           close();
           return;

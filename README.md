@@ -27,6 +27,7 @@ Regret Forecaster is a production-ready Next.js 14 app that predicts likely regr
 - Side-by-side comparison for two decisions
 - Public shareable read-only links
 - Dynamic OG image per shared analysis
+- Portable fallback share links when DB persistence is unavailable
 
 ## 1) Prerequisites
 
@@ -116,6 +117,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - Emits NDJSON events to UI (`partial`, `retry`, `complete`, `error`)
 - Retries once automatically if model JSON is invalid
 - Persists completed analyses to Supabase
+- If persistence fails, returns a portable `local_...` share token so the result remains shareable
 
 ## 7) Share and OG
 

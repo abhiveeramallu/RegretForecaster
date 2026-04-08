@@ -26,7 +26,8 @@ export default async function OGImage({ params }: OGProps) {
   let verdict = "Regret Forecast";
 
   try {
-    const response = await fetch(`${appUrl}/api/share/${params.id}`, { cache: "no-store" });
+    const token = encodeURIComponent(params.id);
+    const response = await fetch(`${appUrl}/api/share/${token}`, { cache: "no-store" });
     if (response.ok) {
       const payload = (await response.json()) as {
         analysis?: { score?: number; verdict?: string };

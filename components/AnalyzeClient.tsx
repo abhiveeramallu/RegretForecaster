@@ -17,10 +17,16 @@ import type { AnalysisResult, BreakdownDimension, BiasSeverity } from "@/lib/typ
 import { normalizeAnalysis } from "@/lib/types";
 
 type StreamEvent =
-  | { type: "start" }
+  | { type: "start"; provider?: string }
   | { type: "partial"; data: Partial<AnalysisResult> }
   | { type: "retry"; message: string }
-  | { type: "complete"; data: AnalysisResult; shareToken: string }
+  | {
+      type: "complete";
+      data: AnalysisResult;
+      shareToken: string;
+      persisted?: boolean;
+      warning?: string;
+    }
   | { type: "error"; code: string; message: string; waitSeconds?: number };
 
 interface AnalyzeClientProps {
@@ -61,6 +67,7 @@ export default function AnalyzeClient({ recordId }: AnalyzeClientProps) {
   const [thinking, setThinking] = useState(false);
   const [retryNotice, setRetryNotice] = useState("");
   const [error, setError] = useState("");
+  const [saveWarning, setSaveWarning] = useState("");
 
   useEffect(() => {
     if (hasStartedRef.current) return;
@@ -70,6 +77,7 @@ export default function AnalyzeClient({ recordId }: AnalyzeClientProps) {
       setLoading(true);
       setError("");
       setRetryNotice("");
+      setSaveWarning("");
 
       const supabase = getSupabaseBrowserClient();
 
@@ -194,6 +202,9 @@ export default function AnalyzeClient({ recordId }: AnalyzeClientProps) {
                 doneTerminally = true;
                 setAnalysis(event.data);
                 setShareToken(event.shareToken);
+                if (event.warning) {
+                  setSaveWarning(event.warning);
+                }
                 setThinking(false);
                 setLoading(false);
                 await reader.cancel();
@@ -273,6 +284,7 @@ export default function AnalyzeClient({ recordId }: AnalyzeClientProps) {
       <div className="mb-6 flex flex-wrap items-center gap-3">
         {thinking && <WaveThinking />}
         {retryNotice && <p className="text-xs text-accent-amber">{retryNotice}</p>}
+        {saveWarning && <p className="text-xs text-accent-amber">{saveWarning}</p>}
         {error && <p className="text-sm text-accent-red">{error}</p>}
       </div>
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { decodeLocalSharePayload } from "@/lib/share-token";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -15,6 +16,21 @@ export async function GET(_request: Request, { params }: Context) {
 
   if (!token || token.length < 12) {
     return NextResponse.json({ error: "Invalid share token" }, { status: 400 });
+  }
+
+  const localPayload = decodeLocalSharePayload(token);
+  if (localPayload) {
+    return NextResponse.json({
+      analysis: {
+        id: null,
+        decision_text: localPayload.decisionText,
+        result: localPayload.result,
+        score: localPayload.result.score,
+        verdict: localPayload.result.verdict,
+        share_token: token,
+        created_at: localPayload.createdAt
+      }
+    });
   }
 
   const supabase = getSupabaseAdminClient();
